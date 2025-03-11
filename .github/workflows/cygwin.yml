@@ -12,9 +12,10 @@ jobs:
     - name: Set git to Linux line endings
       run: git config --global core.autocrlf input
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        submodules: true
     - name: Install cygwin
       uses: cygwin/cygwin-install-action@master
       with:
@@ -30,8 +31,10 @@ jobs:
       run: |
           export LANG=C.UTF-8 TERM=dumb VERBOSE=true TZ=America/Los_Angeles
           mkdir `pwd`/app
+          cd guile
           ./autogen.sh
-          ./configure CFLAGS="-g -O2 -Wall" --disable-lto --prefix=`pwd`/app
+          cd ..
+          ./guile/configure CFLAGS="-g -O2 -Wall" --disable-lto --prefix=`pwd`/app
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
     - name: Make
       run: |
