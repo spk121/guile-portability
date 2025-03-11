@@ -37,11 +37,11 @@ jobs:
     - name: Configure
       run: |
         export LANG=C.UTF-8 TERM=dumb VERBOSE=true DEBIAN_FRONTEND=noninteractive TZ=America/Los_Angeles
+        export TOP=`pwd`
         mkdir `pwd`/app
         cd guile
         ./autogen.sh
-        cd ..
-        ./guile/configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix=`pwd`/app
+        ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix=$TOP/app
     - name: Run Dist Check
       run: make -j4 distcheck V=1
     - name: Make Source Package
