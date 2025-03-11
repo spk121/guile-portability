@@ -4,10 +4,10 @@ on:
   # Trigger on push to main branch and pull requests
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
   # Allow manual triggering
   workflow_dispatch:
 
