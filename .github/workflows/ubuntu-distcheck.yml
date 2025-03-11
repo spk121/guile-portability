@@ -1,58 +1,67 @@
-name: Ubuntu Distcheck
+name: Guile Distcheck on Ubuntu
 
 on:
+  # Trigger on push to main branch and pull requests
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   # Allow manual triggering
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build
+    name: Build and Distcheck
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1
         submodules: true
     - name: Install packages
-      run: >-
-        sudo apt-get update &&
-        sudo apt-get install -y
-        texlive
-        texlive-plain-generic
-        texinfo
-        autoconf
-        libtool
-        gettext
-        autopoint
-        gperf
-        pkg-config
-        lzip
-        libgc-dev
-        libgmp-dev
-        libltdl-dev
-        libncurses5-dev
-        libreadline6-dev
-        libunistring-dev
+      run: |
+        sudo apt-get update -qq &&
+        sudo apt-get install -y -qq \
+          texlive \
+          texlive-plain-generic \
+          texinfo \
+          autoconf \
+          libtool \
+          gettext \
+          autopoint \
+          gperf \
+          pkg-config \
+          lzip \
+          libgc-dev \
+          libgmp-dev \
+          libltdl-dev \
+          libncurses5-dev \
+          libreadline-dev \
+          libunistring-dev
     - name: Configure
       run: |
         export LANG=C.UTF-8 TERM=dumb VERBOSE=true DEBIAN_FRONTEND=noninteractive TZ=America/Los_Angeles
-        export TOP=`pwd`
-        mkdir `pwd`/app
-        cd guile
-        ./autogen.sh
-        ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix=$TOP/app
+        export TOP="$(pwd)"
+        set -e  # Exit on any error
+        mkdir -p "$TOP/app" && \
+        cd guile && \
+        ./autogen.sh && \
+        ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix="$TOP/app"
     - name: Run Dist Check
       run: |
         cd guile
-        make -j4 distcheck V=1
+        make -j$(nproc) distcheck V=1
     - name: Make Source Package
       run: |
         cd guile
-        gunzip *.tar.gz
+        gunzip *.tar.gz  # Unzip to avoid double compression in artifact
     - name: Archive Source Package
       uses: actions/upload-artifact@v4
       with:
         name: Source Package
-        path: guile*tar ./**/*.log
-
+        path: |
+          guile/*.tar
+          guile/**/*.log
