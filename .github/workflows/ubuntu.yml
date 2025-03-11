@@ -1,56 +1,64 @@
-name: Ubuntu
+name: Guile Build & Test on Ubuntu
 
 on:
+  # Trigger on push to main branch and pull requests
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
   # Allow manual triggering
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository and submodules
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1  # Full history for versioning if needed
         submodules: true
     - name: Install packages
-      run: >-
-        sudo apt-get update &&
-        sudo apt-get install -y
-        texlive
-        texlive-plain-generic
-        texinfo
-        autoconf
-        libtool
-        gettext
-        autopoint
-        gperf
-        pkg-config
-        lzip
-        libgc-dev
-        libgmp-dev
-        libltdl-dev
-        libncurses5-dev
-        libreadline6-dev
-        libunistring-dev
+      run: |
+        sudo apt-get update -qq &&
+        sudo apt-get install -y -qq \
+          texlive \
+          texlive-plain-generic \
+          texinfo \
+          autoconf \
+          libtool \
+          gettext \
+          autopoint \
+          gperf \
+          pkg-config \
+          lzip \
+          libgc-dev \
+          libgmp-dev \
+          libltdl-dev \
+          libncurses5-dev \
+          libreadline-dev \
+          libunistring-dev
     - name: Configure
       run: |
         export LANG=C.UTF-8 TERM=dumb VERBOSE=true DEBIAN_FRONTEND=noninteractive TZ=America/Los_Angeles
-        mkdir `pwd`/app
-        cd guile
-        ./autogen.sh
-        cd ..
-        ./guile/configure --prefix=`pwd`/app
+        set -e  # Exit on any error
+        mkdir -p "$(pwd)/app" && \
+        cd guile && \
+        ./autogen.sh && \
+        cd .. && \
+        ./guile/configure --prefix="$(pwd)/app"
     - name: Build
       run: |
-        make -j4 V=1
+        make -j$(nproc) V=1
     - name: Run Unit Tests
-      run: make check V=1
+      run: |
+        make check V=1
     - name: Archive Test Logs
-      if: success() || failure ()
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs
-        path: ./**/*.log
-   
+        path: **/*.log
