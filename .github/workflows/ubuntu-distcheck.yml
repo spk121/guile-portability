@@ -10,9 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        submodules: true
     - name: Install packages
       run: >-
         sudo apt-get update &&
@@ -37,14 +38,12 @@ jobs:
       run: |
         export LANG=C.UTF-8 TERM=dumb VERBOSE=true DEBIAN_FRONTEND=noninteractive TZ=America/Los_Angeles
         mkdir `pwd`/app
+        cd guile
         ./autogen.sh
-        ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix=`pwd`/app
-    - name: Build
-      run: |
-        make -j4 V=1
+        cd ..
+        ./guile/configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix=`pwd`/app
     - name: Run Dist Check
       run: make -j4 distcheck V=1
-
     - name: Make Source Package
       run: |
         gunzip *.tar.gz
