@@ -43,12 +43,16 @@ jobs:
         ./autogen.sh
         ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix=$TOP/app
     - name: Run Dist Check
-      run: make -j4 distcheck V=1
+      run: |
+        cd guile
+        make -j4 distcheck V=1
     - name: Make Source Package
       run: |
+        cd guile
         gunzip *.tar.gz
     - name: Archive Source Package
       uses: actions/upload-artifact@v4
       with:
         name: Source Package
-        path: guile*tar ./*.log
+        path: guile*tar ./**/*.log
+
