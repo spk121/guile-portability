@@ -21,6 +21,16 @@ jobs:
       with:
         fetch-depth: 1
         submodules: true
+
+    # Need be at the HEAD of the badges repo so we can commit a badge to it later.
+    # Otherwise, the submodule would be in detached head state.
+    - name: Update Submodule to HEAD
+      run: |
+        cd ./badges  # Enter the submodule directory
+        git checkout master
+        git pull origin main
+        cd ..
+    
     - name: Install packages
       run: |
         sudo apt-get update -qq &&
