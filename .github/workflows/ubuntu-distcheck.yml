@@ -63,7 +63,7 @@ jobs:
       run: |
         # Create the failure badge
         mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
-        ./verbose-waffle/scripts/basic.sh 'Ubuntu Distcheck' 'failure' 'red' > ./badges/${{ github.repository }}/${{ github.ref_name }}//ubuntu_distcheck.svg
+        bash ./verbose-waffle/scripts/basic.sh 'Ubuntu Distcheck' 'failure' 'red' > ./badges/${{ github.repository }}/${{ github.ref_name }}//ubuntu_distcheck.svg
           
         # Configure git
         git config --global user.name "GitHub Action"
@@ -102,7 +102,7 @@ jobs:
         # Create the failure badge
         
         mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
-        ./verbose-waffle/scripts/basic.sh 'Ubuntu Distcheck' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
+        bash ./verbose-waffle/scripts/basic.sh 'Ubuntu Distcheck' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
           
         # Configure git
         git config --global user.name "GitHub Action"
