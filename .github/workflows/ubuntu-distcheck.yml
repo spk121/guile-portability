@@ -51,9 +51,38 @@ jobs:
         ./autogen.sh && \
         ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix="$TOP/app"
     - name: Run Dist Check
+      id: distcheck
       run: |
         cd guile
         make -j$(nproc) distcheck V=1
+      continue-on-error: true  # Allows the workflow to continue even if this fails
+      
+      # Step to handle the distcheck failure case
+    - name: Handle Distcheck Failure
+      if: steps.distcheck.outcome != 'success'
+      run: |
+        # Create the failure badge
+        ./verbose-waffle/scripts/makebadge.sh 'Ubuntu Distcheck' 'failure' 'red' > ./badges/guile-portability/main/ubuntu_distcheck.svg
+          
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+          
+        # Stage and commit the badge in the submodule
+        cd ./badges
+        git add guile-portability/main/ubuntu_distcheck.svg
+        git commit -m "Update Ubuntu Distcheck badge to failure"
+          
+        # Push the submodule changes
+        git push origin main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Fail the workflow if distcheck failed
+    - name: Check Distcheck Result
+      if: steps.distcheck.outcome != 'success'
+      run: exit 1
+        
     - name: Make Source Package
       run: |
         cd guile
@@ -65,3 +94,4 @@ jobs:
         path: |
           guile/*.tar
           guile/**/*.log
+
