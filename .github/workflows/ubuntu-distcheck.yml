@@ -62,7 +62,8 @@ jobs:
       if: steps.distcheck.outcome != 'success'
       run: |
         # Create the failure badge
-        ./verbose-waffle/scripts/makebadge.sh 'Ubuntu Distcheck' 'failure' 'red' > ./badges/guile-portability/main/ubuntu_distcheck.svg
+        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
+        ./verbose-waffle/scripts/basic.sh 'Ubuntu Distcheck' 'failure' 'red' > ./badges/${{ github.repository }}/${{ github.ref_name }}//ubuntu_distcheck.svg
           
         # Configure git
         git config --global user.name "GitHub Action"
@@ -70,11 +71,11 @@ jobs:
           
         # Stage and commit the badge in the submodule
         cd ./badges
-        git add guile-portability/main/ubuntu_distcheck.svg
+        git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
         git commit -m "Update Ubuntu Distcheck badge to failure"
           
         # Push the submodule changes
-        git push origin main
+        git push origin master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -94,4 +95,26 @@ jobs:
         path: |
           guile/*.tar
           guile/**/*.log
+
+      # Step to handle the distcheck success case
+    - name: Handle Distcheck Success
+      run: |
+        # Create the failure badge
+        
+        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
+        ./verbose-waffle/scripts/basic.sh 'Ubuntu Distcheck' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
+          
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+          
+        # Stage and commit the badge in the submodule
+        cd ./badges
+        git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
+        git commit -m "Update Ubuntu Distcheck badge to success"
+          
+        # Push the submodule changes
+        git push origin master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
