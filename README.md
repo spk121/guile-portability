@@ -19,7 +19,7 @@ Windows,status for the benefit of LilyPond and for the Lisp Game Jam.
 | Project | Status | Notes |
 |---------|--------|-------|
 | [Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml) | ![Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml/badge.svg) | default ./configure |
-| [Ubuntu Distcheck](https://github.com/spk121/guile-portability/actions/workflows/ubuntu-distcheck.yml) | ![Ubuntu Distcheck](https://github.com/spk121/guile-portability/actions/workflows/ubuntu-distcheck.yml/badge.svg) | |
+| [Ubuntu Distcheck](https://github.com/spk121/guile-portability/actions/workflows/ubuntu-distcheck.yml) |  ![Build Status](https://raw.githubusercontent.com/spk121/badges/spk121/guile-portability/master/build.svg?sanitize=true) | |
 | [Ubuntu Basic](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml) | ![Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml/badge.svg) | Mini-GMP, No Threads, No JIT, No LTO |
 | [Debian 64-bit in Docker]() | | |
 | [Debian 32-bit in Docker]() | | |
