@@ -1,3 +1,9 @@
 [submodule "guile"]
 	path = guile
 	url = git@github.com:spk121/guile.git
+[submodule "verbose-waffle"]
+	path = verbose-waffle
+	url = git@github.com:spk121/verbose-waffle.git
+[submodule "badges"]
+	path = badges
+	url = git@github.com:spk121/badges.git
