@@ -1,21 +1,42 @@
-name: Cygwin
+name: Guile Build & Test on Cygwin
 
 on:
+  # Trigger on push to main branch and pull requests
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
   # Allow manual triggering
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build
+    name: Build and Test
     runs-on: windows-latest
     steps:
     - name: Set git to Linux line endings
       run: git config --global core.autocrlf input
-    - name: Checkout
+
+    - name: Checkout repository and submodules
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
         submodules: true
+        token: ${{ secrets.PAT_TOKEN }} # Need a token so I can push to submodule repo
+
+    - name: Configure git bot account
+      run: |
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+          
+    # Need be at the HEAD of the badges repo so we can commit to it later.
+    # Otherwise, the submodule would be in detached head state.
+    - name: Update Submodule to HEAD
+      run: |
+        cd ./badges  # Enter the submodule directory
+        git checkout master
+        git pull origin master
+        cd ..
     - name: Install cygwin
       uses: cygwin/cygwin-install-action@master
       with:
@@ -29,31 +50,110 @@ jobs:
           texinfo texinfo-tex texlive
     - name: Configure
       run: |
-          export LANG=C.UTF-8 TERM=dumb VERBOSE=true TZ=America/Los_Angeles
-          mkdir `pwd`/app
-          cd guile
-          ./autogen.sh
-          cd ..
-          ./guile/configure CFLAGS="-g -O2 -Wall" --disable-lto --prefix=`pwd`/app
+        export LANG=C.UTF-8
+        export TERM=dumb
+        export VERBOSE=true
+        export TZ=America/Los_Angeles
+        export TOP="$(pwd)"
+        set -e  # Exit on any error
+        mkdir -p "$(pwd)/app" && \
+        cd guile && \
+        ./autogen.sh && \
+          ./configure CFLAGS="-g -O2 -Wall" --disable-lto --prefix="$(pwd)/app"
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
-    - name: Make
+    - name: Build
+      id: build
       run: |
-        make -j4 V=1
+        cd guile && \
+        make -j$(nproc) V=1
+      continue-on-error: true  # Need to continue to make a build failure badge	
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
+
+    - name: Handle Build Outcome
+      run: |
+        # Create the badge directory
+        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
+
+        # Generate badge based on build outcome
+        if [ "${{ steps.build.outcome }}" == "success" ]; then
+          bash ./verbose-waffle/scripts/basic.sh 'Cygwin' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg.new
+          COMMIT_MSG="Update Cygwin badge to success"
+        else
+          bash ./verbose-waffle/scripts/basic.sh 'Cygwin' 'failure' 'red' > ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg.new
+          COMMIT_MSG="Update Cygwin badge to failure"
+        fi
+
+        # Compare the new file with the existing one (if it exists)
+        if [ -f ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg ]; then
+          if ! cmp -s ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg.new; then
+            mv ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg
+            cd ./badges
+            git add ./${{ github.repository }}/${{ github.ref_name }}/cygwin.svg
+            git commit -m "$COMMIT_MSG"
+            git push origin master
+          else
+            echo "No changes detected in cygwin.svg, skipping commit."
+            rm ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg.new
+          fi
+        else
+          mv ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin.svg
+          cd ./badges
+          git add ./${{ github.repository }}/${{ github.ref_name }}/cygwin.svg
+          git commit -m "$COMMIT_MSG"
+          git push origin master
+        fi
+
+        # Exit with failure if build failed
+        if [ "${{ steps.build.outcome }}" != "success" ]; then
+          exit 1
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Run Unit Tests
+      id: check
       run: |
-        # git config --global --add safe.directory /cygdrive/d/a/guile/guile
-        git config --global --add safe.directory /cygdrive/d/a/guile-jonas/guile-jonas
+        cd guile && \
+        git config --global --add safe.directory /cygdrive/d/a/guile-portability/guile
         make check V=1
+      continue-on-error: true
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
-    - name: Run More Unit Tests on Failure
-      if: ${{ failure() }}
+      
+    - name: Short report of unit tests
       run: |
-        ./check-guile
-      shell: C:\cygwin\bin\bash.exe -o igncr '{0}'      
-    - name: Archive test logs
-      if: ${{ success() || failure() }}
+        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
+        if [ -f guile/check-guile.log ]; then
+          cat guile/check-guile.log | tr -d '\0' | grep -A10 "Totals for this test run" | bash ./verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg.new
+        else
+          echo "Complete test failure" | bash ./verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg.new
+        fi
+
+        # Compare the new file with the existing one (if it exists)
+        if [ -f ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg ]; then
+          if ! cmp -s ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg.new; then
+            mv ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg
+            cd ./badges
+            git add ./${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg
+            git commit -m "Update Cygwin badge with test results"
+            git push origin master
+          else
+            echo "No changes detected in cygwin-check.svg, skipping commit."
+            rm ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg.new
+          fi
+        else
+          mv ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg
+          cd ./badges
+          git add ./${{ github.repository }}/${{ github.ref_name }}/cygwin-check.svg
+          git commit -m "Update Cygwin badge with test results"
+          git push origin master
+        fi
+
+    - name: Archive Test Logs
       uses: actions/upload-artifact@v4
       with:
-        name: Test logs
-        path: ./*.log
+        name: Test Logs
+        path: ./guile/*.log
+
+    - name: Late Quit
+      if: ${{ steps.check.outcome != 'success' }}
+      run: exit 1
