@@ -70,7 +70,7 @@ jobs:
         mkdir -p "$(pwd)/app" && \
         cd guile && \
         ./autogen.sh && \
-        ./configure --enable-mini-gmp --with-threads=null --disable-lto --prefix="$(pwd)/app"
+        ./configure --enable-mini-gmp --with-threads=null --disable-lto --enable-jit=no --prefix="$(pwd)/app"
 
     - name: Build
       id: build
