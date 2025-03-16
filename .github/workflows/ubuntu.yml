@@ -3,11 +3,9 @@ name: Guile Build & Test on Ubuntu
 on:
   # Trigger on push to main branch and pull requests
   push:
-    branches:
-      - master
+    branches: [ $default-branch ]
   pull_request:
-    branches:
-      - master
+    branches: [ $default-branch ]
   # Allow manual triggering
   workflow_dispatch:
 
@@ -22,6 +20,12 @@ jobs:
         submodules: true
         token: ${{ secrets.PAT_TOKEN }} # Need a token so I can push to submodule repo
 
+    - name: Configure git bot account
+      run: |
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+          
     # Need be at the HEAD of the badges repo so we can commit to it later.
     # Otherwise, the submodule would be in detached head state.
     - name: Update Submodule to HEAD
@@ -64,7 +68,7 @@ jobs:
     - name: Build
       id: build
       run: |
-        cd guile
+        cd guile && \
         make -j$(nproc) V=1
       continue-on-error: true  # Need to continue to make a build failure badge
 
@@ -75,10 +79,6 @@ jobs:
         # Create the success badge
         mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
         bash ./verbose-waffle/scripts/basic.sh 'Ubuntu' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
-          
-        # Configure git
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
           
         # Stage and commit the badge in the submodule
         cd ./badges
@@ -91,16 +91,12 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Step to handle the build failure case
-    - name: Handle Build
+    - name: Handle Buile Failure
       if: steps.build.outcome != 'success'
       run: |
         # Create the failure badge
         mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
         bash ./verbose-waffle/scripts/basic.sh 'Ubuntu' 'failure' 'red' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
-          
-        # Configure git
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
           
         # Stage and commit the badge in the submodule
         cd ./badges
@@ -112,29 +108,36 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # Fail the workflow if distcheck failed
-    - name: Check Distcheck Result
+    # Fail the workflow if build
+    - name: Early Quit
       if: steps.build.outcome != 'success'
       run: exit 1
 
-
     - name: Run Unit Tests
       run: |
-        cd guile
+        cd guile && \
         make check V=1
       continue-on-error: true
 
     - name: Short report of unit tests
       run: |
-        if [ -f check-guile.log ]; then
-          cat check-guile.log | tr -d '\0' | grep -A10 "Totals for this test run" | ../guile-portability/verbose-waffle/scripts/txt2svg.sh > tmp.svg
+        if [ -f guile/check-guile.log ]; then
+          cat guile/check-guile.log | tr -d '\0' | grep -A10 "Totals for this test run" | ./guile-portability/verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg
         else
-          echo "Complete test failure" | ../guile-portability/verbose-waffle/scripts/txt2svg.sh > tmp.svg
+          echo "Complete test failure" | ./guile-portability/verbose-waffle/scripts/txt2svg.sh  > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg
         fi
+
+        # Stage and commit the badge in the submodule
+        cd ./badges
+        git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg
+        git commit -m "Update Ubuntu badge to failure"
+          
+        # Push the submodule changes
+        git push origin master
 
     - name: Archive Test Logs
       if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs
-        path: ./**/*.log
+        path: ./guile/*.log

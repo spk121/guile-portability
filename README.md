@@ -16,23 +16,24 @@ Windows,status for the benefit of LilyPond and for the Lisp Game Jam.
 
 ## Badges
 
-| Project | Status | Notes |
-|---------|--------|-------|
-| [Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml) | ![Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml/badge.svg) | default ./configure |
-| [Ubuntu Distcheck](https://github.com/spk121/guile-portability/actions/workflows/ubuntu-distcheck.yml) |  ![Build Status](https://raw.githubusercontent.com/spk121/badges/master/spk121/guile-portability/master/ubuntu_distcheck.svg?sanitize=true)  | |
-| [Ubuntu Basic](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml) | ![Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml/badge.svg) | Mini-GMP, No Threads, No JIT, No LTO |
-| [Debian 64-bit in Docker]() | | |
-| [Debian 32-bit in Docker]() | | |
-| [FlatPak]() | | |
-| [Cygwin](https://github.com/spk121/guile-portability/actions/workflows/cygwin.yml) | ![Cygwin](https://github.com/spk121/guile-portability/actions/workflows/cygwin.yml/badge.svg) | |
-| [Cygwin Distcheck](https://github.com/spk121/guile-portability/actions/workflows/cygwin-distcheck.yml) | ![Cygwin Distcheck](https://github.com/spk121/guile-portability/actions/workflows/cygwin-distcheck.yml/badge.svg) | |
-| [MSYS](https://github.com/spk121/guile-portability/actions/workflows/msys.yml) | ![MSYS](https://github.com/spk121/guile-portability/actions/workflows/msys.yml/badge.svg) | |
-| [MinGW-w32 Basic](https://github.com/spk121/guile-portability/actions/workflows/mingw-w32-basic.yml) | ![MinGW](https://github.com/spk121/guile-portability/actions/workflows/mingw-w32-basic.yml/badge.svg) | MSVCRT, Mini-GMP, No Threads, No JIT, No LTO, Gnu Filesystem Hierarchy |
-| [MinGW-w64 Basic](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64-basic.yml) | ![MinGW](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64-basic.yml/badge.svg) | UCRT, Mini-GMP, No Threads, No JIT, No LTO, Gnu Filesystem Hierarchy | 
-| [MinGW-w64 Full](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64.yml) | ![MinGW](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64.yml/badge.svg) | UCRT, Mini-GMP, Threads, JIT, LTO, Gnu Filesystem Hierarchy |
-| [Windows Standalone Zip]() | | MinGW-w64 as portable Zip file |
-| [Windows MSIX]() | | MinGW-W64 packaged as MSIX |
-| [Mac OS](https://github.com/spk121/guile-portability/actions/workflows/macos.yml) | ![Mac OS](https://github.com/spk121/guile-portability/actions/workflows/macos.yml/badge.svg) | |
+| Project | Status | Check | Notes |
+|---------|--------|-------|-------| 
+| [Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu-distcheck.yml) |  ![Build Status](https://raw.githubusercontent.com/spk121/badges/master/spk121/guile-portability/master/ubuntu.svg?sanitize=true)  | ![Build Status](https://raw.githubusercontent.com/spk121/badges/master/spk121/guile-portability/master/ubuntu-check.svg?sanitize=true) | |
+| [Ubuntu Distcheck](https://github.com/spk121/guile-portability/actions/workflows/ubuntu-distcheck.yml) |  ![Build Status](https://raw.githubusercontent.com/spk121/badges/master/spk121/guile-portability/master/ubuntu_distcheck.svg?sanitize=true)  | | |
+| [Ubuntu Basic](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml) | ![Ubuntu](https://github.com/spk121/guile-portability/actions/workflows/ubuntu.yml/badge.svg) | | Mini-GMP, No Threads, No JIT, No LTO |
+| [Debian 64-bit in Docker]() | | | |
+| [Debian 32-bit in Docker]() | | | |
+| [FlatPak]() | | | |
+| [Cygwin](https://github.com/spk121/guile-portability/actions/workflows/cygwin.yml) | ![Cygwin](https://github.com/spk121/guile-portability/actions/workflows/cygwin.yml/badge.svg) | | |
+| [Cygwin Distcheck](https://github.com/spk121/guile-portability/actions/workflows/cygwin-distcheck.yml) | ![Cygwin Distcheck](https://github.com/spk121/guile-portability/actions/workflows/cygwin-distcheck.yml/badge.svg) | | |
+| [MSYS](https://github.com/spk121/guile-portability/actions/workflows/msys.yml) | ![MSYS](https://github.com/spk121/guile-portability/actions/workflows/msys.yml/badge.svg) | | |
+| [MinGW-w32 Basic](https://github.com/spk121/guile-portability/actions/workflows/mingw-w32-basic.yml) | ![MinGW](https://github.com/spk121/guile-portability/actions/workflows/mingw-w32-basic.yml/badge.svg) | | MSVCRT, Mini-GMP, No Threads, No JIT, No LTO, Gnu Filesystem Hierarchy |
+| [MinGW-w64 Basic](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64-basic.yml) | ![MinGW](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64-basic.yml/badge.svg) | | UCRT, Mini-GMP, No Threads, No JIT, No LTO, Gnu Filesystem Hierarchy | 
+| [MinGW-w64 Full](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64.yml) | ![MinGW](https://github.com/spk121/guile-portability/actions/workflows/mingw-w64.yml/badge.svg) | | UCRT, Mini-GMP, Threads, JIT, LTO, Gnu Filesystem Hierarchy |
+| [Windows Standalone Zip]() | | | MinGW-w64 as portable Zip file |
+| [Windows Standalone Zip]() | | | MinGW-w64 as installable MSI file |
+| [Windows MSIX]() | | | MinGW-W64 packaged as MSIX |
+| [Mac OS](https://github.com/spk121/guile-portability/actions/workflows/macos.yml) | ![Mac OS](https://github.com/spk121/guile-portability/actions/workflows/macos.yml/badge.svg) | | |
 
 ## Bugs
 
