@@ -60,6 +60,7 @@ jobs:
         cd guile && \
         ./autogen.sh && \
         ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix="$TOP/app"
+
     - name: Run Dist Check
       id: distcheck
       run: |
