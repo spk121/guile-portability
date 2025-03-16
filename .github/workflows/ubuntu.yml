@@ -131,9 +131,9 @@ jobs:
       run: |
         mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
         if [ -f guile/check-guile.log ]; then
-          cat guile/check-guile.log | tr -d '\0' | grep -A10 "Totals for this test run" | bash ./guile-portability/verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
+          cat guile/check-guile.log | tr -d '\0' | grep -A10 "Totals for this test run" | bash ./verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
         else
-          echo "Complete test failure" | bash ./guile-portability/verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
+          echo "Complete test failure" | bash ./verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
         fi
 
         # Compare the new file with the existing one (if it exists)
