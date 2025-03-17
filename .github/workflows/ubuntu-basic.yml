@@ -108,6 +108,7 @@ jobs:
         else
           mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic.svg
           cd ./badges
+          git pull origin master
           git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic.svg
           git commit -m "$COMMIT_MSG"
           git push origin master
@@ -141,6 +142,7 @@ jobs:
           if ! cmp -s ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic-check.svg ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic-check.svg.new; then
             mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic-check.svg
             cd ./badges
+            git pull origin master
             git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-basic-check.svg
             git commit -m "Update Ubuntu Basic badge with test results"
             git push origin master
