@@ -54,8 +54,8 @@ jobs:
     - name: Update Submodule to HEAD
       run: |
         Set-Location -Path badges  # Enter the submodule directory
-        git checkout master
-        git pull origin master
+        & "C:\Program Files\Git\bin\git.exe" checkout master
+        & "C:\Program Files\Git\bin\git.exe" pull origin master
         Set-Location -Path ..
       shell: pwsh
 
