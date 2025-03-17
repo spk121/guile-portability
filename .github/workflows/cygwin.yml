@@ -19,7 +19,10 @@ jobs:
     env:
       PATH: "${{ github.workspace }}/verbose-waffle/scripts:$PATH"
     steps:
-
+    - name: Install Git
+      run: |
+        choco install git
+          
     - name: Checkout repository and submodules
       uses: actions/checkout@v4
       with:
