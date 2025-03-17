@@ -17,7 +17,7 @@ jobs:
       run:
         shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
     env:
-      PATH: "${{ github.workspace }}"/verbose-waffle/scripts:$PATH"
+      PATH: "${{ github.workspace }}/verbose-waffle/scripts:$PATH"
     steps:
     - name: Set git to Linux line endings
       run: git config --global core.autocrlf input
