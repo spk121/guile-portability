@@ -1,4 +1,4 @@
-name: Guile Build & Test on Cygwin
+name: Cygwin - Guile Build & Check
 
 on:
   # Trigger on push to main branch and pull requests
@@ -11,13 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build and Test
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
-    env:
-      PATH: "${{ github.workspace }}/verbose-waffle/scripts:$PATH"
     steps:
     - name: Install Git
       run: |
@@ -29,15 +23,22 @@ jobs:
         submodules: true
         token: ${{ secrets.PAT_TOKEN }} # Need a token so I can push to submodule repo
 
+    - name: Configure git bot account
+      run: |
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+      shell: pwsh
+
     - name: Cache Cygwin Packages
       id: cache-cygwin
       uses: actions/cache@v4
       with:
         path: C:\cygwin
-        key: cygwin-${{ hashfiles('.github/workflows/cygwin.yml') }}
+        key: cygwin-${{ hashFiles('.github/workflows/cygwin.yml') }}
 
     - name: Install cygwin
-      if: steps.cache-cygwin.output.cache-hit != 'true'
+      if: steps.cache-cygwin.outputs.cache-hit != 'true'
       uses: cygwin/cygwin-install-action@master
       with:
         packages: >-
@@ -49,29 +50,17 @@ jobs:
           libiconv-devel
           texinfo texinfo-tex texlive
 
-    - name: Configure git bot account
-      run: |
-        # Configure git
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
-
     # Need be at the HEAD of the badges repo so we can commit to it later.
     # Otherwise, the submodule would be in detached head state.
     - name: Update Submodule to HEAD
       run: |
-        cd ./badges  # Enter the submodule directory
+        Set-Location -Path badges  # Enter the submodule directory
         git checkout master
         git pull origin master
-        cd ..
-        cd ./verbose-waffle
-        git checkout master
-        git pull origin master
-        cd ..
+        Set-Location -Path ..
+      shell: pwsh
 
-    - name: Set Script Permissions
-      run: |
-        chmod +x ./verbose-waffle/scripts/*.sh
-
+    # This uses Cygwin's bash
     - name: Configure
       run: |
         export LANG=C.UTF-8
@@ -84,54 +73,72 @@ jobs:
         cd guile && \
         ./autogen.sh && \
           ./configure CFLAGS="-g -O2 -Wall" --disable-lto --prefix="$(pwd)/app"
+      shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
+    # This uses Cygwin's bash
     - name: Build
       id: build
       run: |
         cd guile && \
         make -j4 V=1
-      continue-on-error: true  # Need to continue to make a build failure badge	
+      shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
+      continue-on-error: true  # Need to continue to make a build failure badge
 
     - name: Handle Build Outcome
       run: |
         # Create the badge directory
-        export BADGEDIR=./badges/${{ github.repository }}/${{ github.ref_name }}/
-        mkdir -p $BADGEDIR
-
+        $BADGEDIR = "./badges/${{ github.repository }}/${{ github.ref_name }}/"
+        New-Item -Path $BADGEDIR -ItemType Directory -Force
+    
         # Generate badge based on build outcome
-        if [ "${{ steps.build.outcome }}" == "success" ]; then
-          ./verbose-waffle/scripts/basic.sh 'Cygwin' 'success' 'green' > tmp.svg
-          COMMIT_MSG="Update Cygwin badge to success"
-        else
-          ./verbose-waffle/scripts/basic.sh 'Cygwin' 'failure' 'red' > tmp.svg
-          COMMIT_MSG="Update Cygwin badge to failure"
-        fi
-        ./verbose-waffle/scripts/update_repo.sh $BADGEDIR cygwin.svg tmp.svg $COMMIT_MSG
-
+        if ("${{ steps.build.outcome }}" -eq "success") {
+          Basic-Badge.ps1 'Cygwin' 'success' 'green' | Out-File -FilePath "tmp.svg" -Encoding utf8
+          $COMMIT_MSG = "Update Cygwin badge to success"
+        } else {
+          Basic-Badge.ps1 'Cygwin' 'failure' 'red' | Out-File -FilePath "tmp.svg" -Encoding utf8
+          $COMMIT_MSG = "Update Cygwin badge to failure"
+        }
+        Update-Repo.ps1 $BADGEDIR "cygwin.svg" "tmp.svg" $COMMIT_MSG
+    
         # Exit with failure if build failed
-        if [ "${{ steps.build.outcome }}" != "success" ]; then
+        if ("${{ steps.build.outcome }}" -ne "success") {
           exit 1
-        fi
+        }
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PATH: "${{ github.workspace }}/verbose-waffle/scripts;$PATH"
+      shell: pwsh
 
+    # This uses Cygwin's bash
     - name: Run Unit Tests
       id: check
       run: |
         cd guile && \
-        git config --global --add safe.directory /cygdrive/d/a/guile-portability/guile
         make check V=1
+      shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
       continue-on-error: true
-      
+
     - name: Short report of unit tests
       run: |
-        export BADGEDIR=./badges/${{ github.repository }}/${{ github.ref_name }}/
-        if [ -f guile/check-guile.log ]; then
-          cat guile/check-guile.log | tr -d '\0' | grep -A10 "Totals for this test run" | ./verbose-waffle/scripts/txt2svg.sh > tmp.svg
-        else
-          echo "Complete test failure" | ./verbose-waffle/scripts/txt2svg.sh > tmp.svg
-        fi
-        ./verbose-waffle/scripts/update_repo.sh $BADGEDIR cygwin-check.svg tmp.svg "Update Cygwin with check results"
+        $BADGEDIR = "./badges/${{ github.repository }}/${{ github.ref_name }}/"
+        if (Test-Path -Path "guile/check-guile.log") {
+          $logContent = Get-Content -Path "guile/check-guile.log" -Raw
+          $logContent = $logContent -replace "`0", ""
+          $totalsSection = $logContent | Select-String -Pattern "Totals for this test run" -Context 0,10
+          if ($totalsSection) {
+            $totalsText = $totalsSection.Line + "`n" + ($totalsSection.Context.PostContext -join "`n")
+            $totalsText | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
+          } else {
+            "Test totals section not found in log" | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
+          }
+        } else {
+          "Complete test failure" | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
+        }
+        Update-Repo.ps1 $BADGEDIR "cygwin-check.svg" "tmp.svg" "Update Cygwin with check results"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PATH: "${{ github.workspace }}/verbose-waffle/scripts;$PATH"
+      shell: pwsh
 
     - name: Archive Test Logs
       if: always() && steps.check.outcome != 'skipped'
