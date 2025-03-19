@@ -12,6 +12,7 @@ RUN apt-get update -qq && \
       libtool \
       gettext \
       pkg-config \
+      libffi-dev \
       libgc-dev \
       libgmp-dev \
       libltdl-dev \
