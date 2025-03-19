@@ -7,17 +7,19 @@ RUN apt-get update -qq && \
       autoconf \
       automake \
       autopoint \
+      build-essential \
       flex \
+      gettext \
       gperf \
       libtool \
-      gettext \
-      pkg-config \
       libffi-dev \
       libgc-dev \
       libgmp-dev \
       libltdl-dev \
       libreadline-dev \
       libunistring-dev \
+      make \
+      pkg-config \
       texinfo && \
     apt-get clean
 
