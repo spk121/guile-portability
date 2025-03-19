@@ -103,7 +103,7 @@ jobs:
           Basic-Badge.ps1 'MSYS' 'failure' 'red' | Out-File -FilePath "tmp.svg" -Encoding utf8
           $COMMIT_MSG = "Update MSYS badge to failure"
         }
-	$BADGENAME = "msys-${{ matrix.env }}.svg"
+        $BADGENAME = "msys-${{ matrix.env }}.svg"
         Update-Repo.ps1 $BADGEDIR $BADGENAME "tmp.svg" $COMMIT_MSG
     
         # Exit with failure if build failed
