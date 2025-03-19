@@ -154,7 +154,7 @@ jobs:
         name: Test logs Test-Logs-${{ github.sha }}-${{matrix.sys}}-${{matrix.env}}${{matrix.thread}}${{matrix.jit}}${{matrix.gmp}}
         path: ./guile/*.log
         if-no-files-found: warn
-	
+
     - name: Late Quit
       if: ${{ steps.check.outcome != 'success' }}
       run: exit 1
