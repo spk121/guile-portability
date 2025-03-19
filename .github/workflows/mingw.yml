@@ -97,13 +97,13 @@ jobs:
     
         # Generate badge based on build outcome
         if ("${{ steps.build.outcome }}" -eq "success") {
-          Basic-Badge.ps1 'MSYS' 'success' 'green' | Out-File -FilePath "tmp.svg" -Encoding utf8
-          $COMMIT_MSG = "Update MSYS badge to success"
+          Basic-Badge.ps1 'MinGW-${{ matrix.env }}' 'success' 'green' | Out-File -FilePath "tmp.svg" -Encoding utf8
+          $COMMIT_MSG = "Update MinGW-${{ matrix.env }} badge to success"
         } else {
-          Basic-Badge.ps1 'MSYS' 'failure' 'red' | Out-File -FilePath "tmp.svg" -Encoding utf8
-          $COMMIT_MSG = "Update MSYS badge to failure"
+          Basic-Badge.ps1 'MinGW-${{ matrix.env }}' 'failure' 'red' | Out-File -FilePath "tmp.svg" -Encoding utf8
+          $COMMIT_MSG = "Update MinGW-${{ matrix.env }} badge to failure"
         }
-        $BADGENAME = "msys-${{ matrix.env }}.svg"
+        $BADGENAME = "mingw-${{ matrix.env }}.svg"
         Update-Repo.ps1 $BADGEDIR $BADGENAME "tmp.svg" $COMMIT_MSG
     
         # Exit with failure if build failed
@@ -140,8 +140,8 @@ jobs:
         } else {
           "Complete test failure" | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
         }
-        $BADGENAME = "msys-${{ matrix.env }}-check.svg"
-        Update-Repo.ps1 $BADGEDIR $BADGENAME "tmp.svg" "Update Msys with check results"
+        $BADGENAME = "mingw-${{ matrix.env }}-check.svg"
+        Update-Repo.ps1 $BADGEDIR $BADGENAME "tmp.svg" "Update MinGW-${{ matrix.env }} with check results"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PATH: "${{ github.workspace }}/verbose-waffle/scripts;$PATH"
