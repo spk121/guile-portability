@@ -128,11 +128,12 @@ jobs:
       run: |
         $BADGEDIR = "./badges/${{ github.repository }}/${{ github.ref_name }}/"
         if (Test-Path -Path "guile/check-guile.log") {
-          $logContent = Get-Content -Path "guile/check-guile.log" -Raw
-          $logContent = $logContent -replace "`0", ""
+          $logContent = Get-Content -Path "guile/check-guile.log"
           $totalsSection = $logContent | Select-String -Pattern "Totals for this test run" -Context 0,10
           if ($totalsSection) {
-            $totalsText = $totalsSection.Line + "`n" + ($totalsSection.Context.PostContext -join "`n")
+            # Take the last match if there are multiple
+            $lastMatch = $totalsSection[-1]
+            $totalsText = ($lastMatch.Line + "`n" + ($lastMatch.Context.PostContext -join "`n"))
             $totalsText | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
           } else {
             "Test totals section not found in log" | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
