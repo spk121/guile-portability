@@ -29,9 +29,6 @@ jobs:
         git config --global user.email "action@github.com"
       shell: pwsh
 
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
     - name: Install Msys2
       uses: msys2/setup-msys2@v2
       with:
@@ -76,6 +73,7 @@ jobs:
         ./autogen.sh && \
           ./configure CFLAGS="-g -O2 -Wall" --disable-lto --prefix="$(pwd)/app"
       shell: msys2 -o igncr '{0}'
+      
     - name: Build
       id: build
       run: |
@@ -147,6 +145,8 @@ jobs:
         name: Test-Logs-${{ github.sha }}
         path: ./guile/*.log
         if-no-files-found: warn
+        
     - name: Late Quit
       if: ${{ steps.check.outcome != 'success' }}
       run: exit 1
+      
