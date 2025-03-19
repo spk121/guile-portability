@@ -19,7 +19,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
@@ -28,4 +28,5 @@ jobs:
           context: .
           file: ./docker/Dockerfile.i386
           push: true
-          tags: spk121/guile:latest
+          tags: spk121/guile-i386:latest
+
