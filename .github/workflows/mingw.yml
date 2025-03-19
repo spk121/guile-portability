@@ -140,7 +140,7 @@ jobs:
         } else {
           "Complete test failure" | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
         }
-	$BADGENAME = "msys-${{ matrix.env }}-check.svg"
+        $BADGENAME = "msys-${{ matrix.env }}-check.svg"
         Update-Repo.ps1 $BADGEDIR $BADGENAME "tmp.svg" "Update Msys with check results"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
