@@ -29,4 +29,3 @@ jobs:
           file: ./docker/Dockerfile.i386
           push: true
           tags: spk121/guile-i386:latest
-
