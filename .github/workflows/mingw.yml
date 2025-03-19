@@ -22,10 +22,21 @@ jobs:
     steps:
     - name: Set git to Linux line endings
       run: git config --global core.autocrlf input
-    - name: Checkout
-      uses: actions/checkout@v3
+
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        submodules: true
+        token: ${{ secrets.PAT_TOKEN }} # Need a token so I can push to submodule repo
+
+    - name: Configure git bot account
+      run: |
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+      shell: pwsh
+
+
     - name: Install MSYS2
       uses: msys2/setup-msys2@v2
       with:
@@ -46,24 +57,104 @@ jobs:
           mingw-w64-${{matrix.env}}-readline
           mingw-w64-${{matrix.env}}-libunistring
           texinfo
+
+    # Need be at the HEAD of the badges repo so we can commit to it later.
+    # Otherwise, the submodule would be in detached head state.
+    - name: Update Submodule to HEAD
+      run: |
+        Set-Location -Path badges  # Enter the submodule directory
+        & "C:\Program Files\Git\bin\git.exe" checkout master
+        & "C:\Program Files\Git\bin\git.exe" pull origin master
+        Set-Location -Path ..
+      shell: pwsh
+
     - name: Configure
       run: |
-        export LANG=C.UTF-8 TERM=dumb VERBOSE=true TZ=America/Los_Angeles
-        mkdir `pwd`/app
-        ./autogen.sh
+        export LANG=C.UTF-8
+        export TERM=dumb
+        export VERBOSE=true
+        export TZ=America/Los_Angeles
+        export TOP="$(pwd)"
+        set -e  # Exit on any error
+        mkdir -p "$(pwd)/app" && \
+        cd guile && \
+        ./autogen.sh && \
         ./configure CFLAGS="-g -O2 -Wall -fpermissive" ${{matrix.thread}} ${{matrix.jit}} ${{matrix.gmp}} --prefix=`pwd`/app
       shell: msys2 -o igncr '{0}'
-    - name: Make
+    - name: Build
+      id: build
       run: |
+        cd guile && \
         make -j4 V=1
       shell: msys2 -o igncr '{0}'
-    - name: Run Unit Tests
+      continue-on-error: true  # Need to continue to make a build failure badge
+
+    - name: Handle Build Outcome
       run: |
+        # Create the badge directory
+        $BADGEDIR = "./badges/${{ github.repository }}/${{ github.ref_name }}/"
+        New-Item -Path $BADGEDIR -ItemType Directory -Force
+    
+        # Generate badge based on build outcome
+        if ("${{ steps.build.outcome }}" -eq "success") {
+          Basic-Badge.ps1 'MSYS' 'success' 'green' | Out-File -FilePath "tmp.svg" -Encoding utf8
+          $COMMIT_MSG = "Update MSYS badge to success"
+        } else {
+          Basic-Badge.ps1 'MSYS' 'failure' 'red' | Out-File -FilePath "tmp.svg" -Encoding utf8
+          $COMMIT_MSG = "Update MSYS badge to failure"
+        }
+	$BADGENAME = "msys-${{ matrix.env }}.svg"
+        Update-Repo.ps1 $BADGEDIR $BADGENAME "tmp.svg" $COMMIT_MSG
+    
+        # Exit with failure if build failed
+        if ("${{ steps.build.outcome }}" -ne "success") {
+          exit 1
+        }
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PATH: "${{ github.workspace }}/verbose-waffle/scripts;$PATH"
+      shell: pwsh
+
+
+    - name: Run Unit Tests
+      id: check
+      run: |
+        cd guile && \
         make check V=1
       shell: msys2 -o igncr '{0}'
-    - name: Archive test logs
-      if: ${{ always() }}
+      continue-on-error: true
+
+    - name: Short report of unit tests
+      run: |
+        $BADGEDIR = "./badges/${{ github.repository }}/${{ github.ref_name }}/"
+        if (Test-Path -Path "guile/check-guile.log") {
+          $logContent = Get-Content -Path "guile/check-guile.log" -Raw
+          $logContent = $logContent -replace "`0", ""
+          $totalsSection = $logContent | Select-String -Pattern "Totals for this test run" -Context 0,10
+          if ($totalsSection) {
+            $totalsText = $totalsSection.Line + "`n" + ($totalsSection.Context.PostContext -join "`n")
+            $totalsText | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
+          } else {
+            "Test totals section not found in log" | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
+          }
+        } else {
+          "Complete test failure" | Text-To-SVG.ps1 | Out-File -FilePath "tmp.svg" -Encoding utf8
+        }
+	$BADGENAME = "msys-${{ matrix.env }}-check.svg"
+        Update-Repo.ps1 $BADGEDIR $BADGENAME "tmp.svg" "Update Msys with check results"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PATH: "${{ github.workspace }}/verbose-waffle/scripts;$PATH"
+      shell: pwsh
+
+    - name: Archive Test Logs
+      if: always() && steps.check.outcome != 'skipped'
       uses: actions/upload-artifact@v4
       with:
-        name: Test logs ${{matrix.sys}}-${{matrix.env}}${{matrix.thread}}${{matrix.jit}}${{matrix.gmp}}
-        path: ./*.log
+        name: Test logs Test-Logs-${{ github.sha }}-${{matrix.sys}}-${{matrix.env}}${{matrix.thread}}${{matrix.jit}}${{matrix.gmp}}
+        path: ./guile/*.log
+        if-no-files-found: warn
+	
+    - name: Late Quit
+      if: ${{ steps.check.outcome != 'success' }}
+      run: exit 1
