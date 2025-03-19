@@ -29,7 +29,7 @@ WORKDIR /guile
 
 # Build and install Guile
 RUN ./autogen.sh && \
-    ./configure --prefix=/usr/local && \
+    ./configure --prefix=/usr/local --disable-dependency-tracking && \
     make -j$(nproc) && \
     make install
 
