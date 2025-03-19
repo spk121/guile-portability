@@ -1,4 +1,4 @@
-name: Build and Push Guile Docker Image
+name: Docker i386
 
 on:
     # Trigger on push to main branch and pull requests

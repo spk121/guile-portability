@@ -8,6 +8,7 @@ RUN apt-get update -qq && \
       automake \
       autopoint \
       flex \
+      gperf \
       libtool \
       gettext \
       pkg-config \
