@@ -1,13 +1,13 @@
 name: Docker i386
 
 on:
-    # Trigger on push to main branch and pull requests
-    push:
-      branches: [ master ]
-    pull_request:
-      branches: [ master ]
-    # Allow manual triggering
-    workflow_dispatch:
+  # Trigger on push to main branch and pull requests
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   build:
@@ -26,6 +26,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v4
         with:
           context: .

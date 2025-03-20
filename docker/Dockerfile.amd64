@@ -6,14 +6,20 @@ RUN apt-get update -qq && \
     apt-get install -y -qq \
       autoconf \
       automake \
-      libtool \
+      autopoint \
+      build-essential \
+      flex \
       gettext \
-      pkg-config \
+      gperf \
+      libtool \
+      libffi-dev \
       libgc-dev \
       libgmp-dev \
       libltdl-dev \
       libreadline-dev \
       libunistring-dev \
+      make \
+      pkg-config \
       texinfo && \
     apt-get clean
 
@@ -25,8 +31,9 @@ WORKDIR /guile
 
 # Build and install Guile
 RUN ./autogen.sh && \
-    ./configure --prefix=/usr/local && \
+    ./configure --prefix=/usr/local --disable-dependency-tracking && \
     make -j$(nproc) && \
+    make check && \
     make install
 
 # Clean up the source directory to reduce image size
@@ -34,6 +41,5 @@ RUN rm -rf /guile
 
 # Set the working directory back to root
 WORKDIR /
-
 
 

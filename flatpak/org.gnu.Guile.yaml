@@ -1,0 +1,22 @@
+app-id: org.gnu.Guile
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: guile
+modules:
+    - name: libgc
+    buildsystem: autotools
+    sources:
+      - type: archive
+        url: https://github.com/ivmai/bdwgc/releases/download/v8.0.4/gc-8.0.4.tar.gz
+        sha256: 436a0ddc67b1ac0b0405b61a9675bca9e075c815765bf4ec4d95c42a8c669a72
+  - name: guile
+    buildsystem: simple
+    build-commands:
+      - sh autogen.sh
+      - ./configure --disable-dependency-tracking --prefix=/app
+      - make
+      - make install
+    sources:
+      - type: dir
+        path: guile
