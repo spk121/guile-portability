@@ -11,6 +11,12 @@ on:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sys: amd64 }
+          - { sys: i386 }
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +35,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./docker/Dockerfile.amd64
+          file: ./docker/Dockerfile.${{ matrix.sys }}
           push: true
-          tags: spk121/guile:latest
+          tags: spk121/guile-${{ matrix.sys }}:latest
