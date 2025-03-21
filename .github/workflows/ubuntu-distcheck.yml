@@ -1,4 +1,4 @@
-name: Guile Distcheck on Ubuntu
+name: Ubuntu Distcheck
 
 on:
   # Trigger on push to main branch and pull requests
@@ -33,7 +33,7 @@ jobs:
     
     - name: Install packages
       run: |
-        sudo apt-get update -qq &&
+        sudo apt-get update -qq
         sudo apt-get install -y -qq \
           texlive \
           texlive-plain-generic \
@@ -55,11 +55,16 @@ jobs:
       run: |
         export LANG=C.UTF-8 TERM=dumb VERBOSE=true DEBIAN_FRONTEND=noninteractive TZ=America/Los_Angeles
         export TOP="$(pwd)"
-        set -e  # Exit on any error
-        mkdir -p "$TOP/app" && \
-        cd guile && \
-        ./autogen.sh && \
+        mkdir -p "$TOP/app"
+        cd guile
+        ./autogen.sh
         ./configure CFLAGS="-g -O2 -Wall -Wno-error" --prefix="$TOP/app"
+
+    - name: Build
+      run: |
+        cd guile
+        make -j$(nproc) V=1
+      continue-on-error: true
 
     - name: Run Dist Check
       id: distcheck
@@ -82,6 +87,7 @@ jobs:
           
         # Stage and commit the badge in the submodule
         cd ./badges
+        git pull
         git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
         git commit -m "Update Ubuntu Distcheck badge to failure"
           
@@ -110,7 +116,7 @@ jobs:
       # Step to handle the distcheck success case
     - name: Handle Distcheck Success
       run: |
-        # Create the failure badge
+        # Create the success badge
         
         mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
         bash ./verbose-waffle/scripts/basic.sh 'Ubuntu Distcheck' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
@@ -121,6 +127,7 @@ jobs:
           
         # Stage and commit the badge in the submodule
         cd ./badges
+        git pull
         git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu_distcheck.svg
         git commit -m "Update Ubuntu Distcheck badge to success"
           
