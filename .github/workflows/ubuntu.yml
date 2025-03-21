@@ -1,4 +1,4 @@
-name: Guile Build & Test on Ubuntu
+name: Ubuntu
 
 on:
   # Trigger on push to main branch and pull requests
@@ -11,8 +11,17 @@ on:
 
 jobs:
   build:
-    name: Build and Test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sys: basic, thread: --without-threads, jit: --enable-jit=no,  gmp: --enable-mini-gmp }
+          - { sys: default, thread: --with-threads, jit: --enable-jit=yes, gmp: --disable-mini-gmp }
+
     runs-on: ubuntu-latest
+    name: Build ${{matrix.sys}} ${{matrix.thread}} ${{matrix.jit}} ${{matrix.gmp}}
+    timeout-minutes: 150
+
     steps:
     - name: Checkout repository and submodules
       uses: actions/checkout@v4
@@ -25,7 +34,7 @@ jobs:
         # Configure git
         git config --global user.name "GitHub Action"
         git config --global user.email "action@github.com"
-          
+
     # Need be at the HEAD of the badges repo so we can commit to it later.
     # Otherwise, the submodule would be in detached head state.
     - name: Update Submodule to HEAD
@@ -37,7 +46,7 @@ jobs:
 
     - name: Install packages
       run: |
-        sudo apt-get update -qq &&
+        sudo apt-get update -qq
         sudo apt-get install -y -qq \
           texlive \
           texlive-plain-generic \
@@ -66,16 +75,15 @@ jobs:
         export DEBIAN_FRONTEND=noninteractive
         export TZ=America/Los_Angeles
         export TOP="$(pwd)"
-        set -e  # Exit on any error
-        mkdir -p "$(pwd)/app" && \
-        cd guile && \
-        ./autogen.sh && \
-        ./configure --prefix="$(pwd)/app"
+        mkdir -p "$(pwd)/app"
+        cd guile
+        ./autogen.sh
+        ./configure ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }} --prefix="$(pwd)/app"
 
     - name: Build
       id: build
       run: |
-        cd guile && \
+        cd guile
         make -j$(nproc) V=1
       continue-on-error: true  # Need to continue to make a build failure badge
 
@@ -98,7 +106,8 @@ jobs:
           if ! cmp -s ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new; then
             mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
             cd ./badges
-            git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
+            git pull
+            git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}.svg
             git commit -m "$COMMIT_MSG"
             git push origin master
           else
@@ -108,7 +117,8 @@ jobs:
         else
           mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
           cd ./badges
-          git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
+          git pull
+          git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}.svg
           git commit -m "$COMMIT_MSG"
           git push origin master
         fi
@@ -123,7 +133,7 @@ jobs:
     - name: Run Unit Tests
       id: check
       run: |
-        cd guile && \
+        cd guile
         make check V=1
       continue-on-error: true
 
@@ -139,9 +149,10 @@ jobs:
         # Compare the new file with the existing one (if it exists)
         if [ -f ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg ]; then
           if ! cmp -s ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new; then
-            mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg
+            mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
             cd ./badges
-            git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg
+            git pull
+            git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
             git commit -m "Update Ubuntu badge with test results"
             git push origin master
           else
@@ -149,9 +160,10 @@ jobs:
             rm ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
           fi
         else
-          mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg
+          mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
           cd ./badges
-          git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg
+          git pull
+          git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
           git commit -m "Update Ubuntu badge with test results"
           git push origin master
         fi
