@@ -1,9 +1,0 @@
-[submodule "guile"]
-	path = guile
-	url = https://github.com/spk121/guile.git
-[submodule "verbose-waffle"]
-	path = verbose-waffle
-	url = https://github.com/spk121/verbose-waffle.git
-[submodule "badges"]
-	path = badges
-	url = https://github.com/spk121/badges.git
