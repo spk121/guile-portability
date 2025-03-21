@@ -36,6 +36,9 @@ RUN ./autogen.sh && \
     make check && \
     make install
 
+# Set LD_LIBRARY_PATH to include where Guile libraries are installed
+ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib/guile/3.0/extensions:${LD_LIBRARY_PATH}
+
 # Clean up the source directory to reduce image size
 RUN rm -rf /guile
 
