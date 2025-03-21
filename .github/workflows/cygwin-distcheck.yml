@@ -1,20 +1,38 @@
 name: Cygwin Distcheck
 
 on:
+  # Trigger on push to main branch and pull requests
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
   # Allow manual triggering
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build
+    name: Build and Distcheck
     runs-on: windows-latest
     steps:
     - name: Set git to Linux line endings
       run: git config --global core.autocrlf input
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        submodules: true
+        token: ${{ secrets.PAT_TOKEN }} # Need a token so I can push to submodule repo
+
+    # Need be at the HEAD of the badges repo so we can commit to it later.
+    # Otherwise, the submodule would be in detached head state.
+    - name: Update Submodule to HEAD
+      run: |
+        cd ./badges  # Enter the submodule directory
+        git checkout master
+        git pull origin master
+        cd ..
+
     - name: Install cygwin
       uses: cygwin/cygwin-install-action@master
       with:
@@ -28,19 +46,88 @@ jobs:
           texinfo texinfo-tex texlive
     - name: Configure
       run: |
-          export LANG=C.UTF-8 TERM=dumb VERBOSE=true TZ=America/Los_Angeles
-          mkdir `pwd`/app
-          ./autogen.sh
-          ./configure CFLAGS="-g -O2 -Wall -Wno-unused-function" --disable-lto --prefix=`pwd`/app
+        export LANG=C.UTF-8 TERM=dumb VERBOSE=true TZ=America/Los_Angeles
+        export TOP="$(pwd)"
+        mkdir -p "$TOP/app"
+        cd guile
+        ./autogen.sh
+        ./configure CFLAGS="-g -O2 -Wall -Wno-unused-function -Wno-error" --disable-lto --prefix="$TOP/app"
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
+
     - name: Build
-      run: make -j4 V=1
+      run: |
+        cd guile
+        make -j4 V=1
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
+      continue-on-error: true
+
     - name: Run Dist Check
-      run: make -j4 distcheck V=1
+      id: distcheck
+      run: |
+        cd guile
+        make -j4 distcheck V=1
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
+      continue-on-error: true
+
+      # Step to handle the distcheck failure case
+    - name: Handle Distcheck Failure
+      if: steps.distcheck.outcome != 'success'
+      run: |
+        # Create the failure badge
+        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
+        bash ./verbose-waffle/scripts/basic.sh 'Cygwin Distcheck' 'failure' 'red' > ./badges/${{ github.repository }}/${{ github.ref_name }}//cygwin_distcheck.svg
+
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+
+        # Stage and commit the badge in the submodule
+        cd ./badges
+        git pull
+        git add ./${{ github.repository }}/${{ github.ref_name }}/cygwin_distcheck.svg
+        git commit -m "Update Cygwin Distcheck badge to failure"
+
+        # Push the submodule changes
+        git push origin master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Fail the workflow if distcheck failed
+    - name: Check Distcheck Result
+      if: steps.distcheck.outcome != 'success'
+      run: exit 1
+
+    - name: Make Source Package
+      run: |
+        cd guile
+        gunzip *.tar.gz  # Unzip to avoid double compression in artifact
     - name: Archive Source Package
       uses: actions/upload-artifact@v4
       with:
         name: Source Package
-        path: guile*tar ./*.log
+        path: |
+          guile/*.tar
+          guile/**/*.log
+
+      # Step to handle the distcheck success case
+    - name: Handle Distcheck Success
+      run: |
+        # Create the success badge
+
+        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
+        bash ./verbose-waffle/scripts/basic.sh 'Cygwin Distcheck' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/cygwin_distcheck.svg
+
+        # Configure git
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+
+        # Stage and commit the badge in the submodule
+        cd ./badges
+        git pull
+        git add ./${{ github.repository }}/${{ github.ref_name }}/cygwin_distcheck.svg
+        git commit -m "Update Cygwin Distcheck badge to success"
+
+        # Push the submodule changes
+        git push origin master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
