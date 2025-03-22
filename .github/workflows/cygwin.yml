@@ -42,7 +42,6 @@ jobs:
     # This uses Cygwin's bash
     - name: Configure
       run: |
-        set -e
         export LANG=C.UTF-8
         export TERM=dumb
         export VERBOSE=true
