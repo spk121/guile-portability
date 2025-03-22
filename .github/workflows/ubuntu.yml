@@ -14,29 +14,10 @@ jobs:
 
     runs-on: ubuntu-latest
     name: Build ${{matrix.sys}} ${{matrix.thread}} ${{matrix.jit}} ${{matrix.gmp}}
-    timeout-minutes: 150
 
     steps:
-    - name: Checkout repository and submodules
+    - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        submodules: true
-        token: ${{ secrets.PAT_TOKEN }} # Need a token so I can push to submodule repo
-
-    - name: Configure git bot account
-      run: |
-        # Configure git
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
-
-    # Need be at the HEAD of the badges repo so we can commit to it later.
-    # Otherwise, the submodule would be in detached head state.
-    - name: Update Submodule to HEAD
-      run: |
-        cd ./badges  # Enter the submodule directory
-        git checkout master
-        git pull origin master
-        cd ..
 
     - name: Install packages
       run: |
@@ -61,6 +42,11 @@ jobs:
           locales
         sudo locale-gen en_US.UTF-8
         sudo update-locale LANG=en_US.UTF-8
+
+    - name: Git clone subprojects
+      run: |
+        git clone --branch staging --single-branch https://github.com/spk121/guile
+        
     - name: Configure
       run: |
         export LANG=C.UTF-8
@@ -68,106 +54,31 @@ jobs:
         export VERBOSE=true
         export DEBIAN_FRONTEND=noninteractive
         export TZ=America/Los_Angeles
-        export TOP="$(pwd)"
-        mkdir -p "$(pwd)/app"
         cd guile
         ./autogen.sh
-        ./configure ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }} --prefix="$(pwd)/app"
+        ./configure CFLAGS="-g -O2" ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }}
 
     - name: Build
       id: build
       run: |
         cd guile
-        make -j$(nproc) V=1
-      continue-on-error: true  # Need to continue to make a build failure badge
+        make -j$(nproc) V=1 2>&1 | tee build.log
 
-    - name: Handle Build Outcome
-      run: |
-        # Create the badge directory
-        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
-
-        # Generate badge based on build outcome
-        if [ "${{ steps.build.outcome }}" == "success" ]; then
-          bash ./verbose-waffle/scripts/basic.sh 'Ubuntu' 'success' 'green' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new
-          COMMIT_MSG="Update Ubuntu badge to success"
-        else
-          bash ./verbose-waffle/scripts/basic.sh 'Ubuntu' 'failure' 'red' > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new
-          COMMIT_MSG="Update Ubuntu badge to failure"
-        fi
-
-        # Compare the new file with the existing one (if it exists)
-        if [ -f ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg ]; then
-          if ! cmp -s ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new; then
-            mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
-            cd ./badges
-            git pull
-            git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}.svg
-            git commit -m "$COMMIT_MSG"
-            git push origin master
-          else
-            echo "No changes detected in ubuntu.svg, skipping commit."
-            rm ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new
-          fi
-        else
-          mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu.svg
-          cd ./badges
-          git pull
-          git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}.svg
-          git commit -m "$COMMIT_MSG"
-          git push origin master
-        fi
-
-        # Exit with failure if build failed
-        if [ "${{ steps.build.outcome }}" != "success" ]; then
-          exit 1
-        fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Run Unit Tests
+    - name: Check
       id: check
       run: |
         cd guile
-        make check V=1
-      continue-on-error: true
-
-    - name: Short report of unit tests
-      run: |
-        mkdir -p ./badges/${{ github.repository }}/${{ github.ref_name }}/
-        if [ -f guile/check-guile.log ]; then
-          cat guile/check-guile.log | tr -d '\0' | grep -A10 "Totals for this test run" | bash ./verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
-        else
-          echo "Complete test failure" | bash ./verbose-waffle/scripts/txt2svg.sh > ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
-        fi
-
-        # Compare the new file with the existing one (if it exists)
-        if [ -f ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg ]; then
-          if ! cmp -s ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new; then
-            mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
-            cd ./badges
-            git pull
-            git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
-            git commit -m "Update Ubuntu badge with test results"
-            git push origin master
-          else
-            echo "No changes detected in ubuntu-check.svg, skipping commit."
-            rm ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new
-          fi
-        else
-          mv ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-check.svg.new ./badges/${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
-          cd ./badges
-          git pull
-          git add ./${{ github.repository }}/${{ github.ref_name }}/ubuntu-${{ matrix.sys }}-check.svg
-          git commit -m "Update Ubuntu badge with test results"
-          git push origin master
-        fi
+        make check V=1  2>&1 | tee check.log
 
     - name: Archive Test Logs
+      if: always() && steps.check.outcome != 'skipped'
       uses: actions/upload-artifact@v4
       with:
-        name: Test Logs
+        name: Test Logs  ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }}
         path: ./guile/*.log
+        if-no-files-found: warn
 
-    - name: Late Quit
-      if: ${{ steps.check.outcome != 'success' }}
+    - name: Late failure
+      if: steps.build.outcome != 'success' || steps.check.outcome != 'success'
       run: exit 1
+        
