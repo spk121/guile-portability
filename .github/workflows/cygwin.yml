@@ -55,7 +55,6 @@ jobs:
 
     # This uses Cygwin's bash
     - name: Build
-      id: build
       run: |
         set -e
         cd guile
@@ -64,7 +63,6 @@ jobs:
 
     # This uses Cygwin's bash
     - name: Check
-      id: check
       run: |
         set -e
         cd guile
@@ -72,6 +70,7 @@ jobs:
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
     - name: Archive Test Logs
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs
