@@ -76,5 +76,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs
-        path: ./guile/*.log
+        path: ./guile/*.log  ./guile/*/*.log ./guile/*/*/*.log
         if-no-files-found: warn
