@@ -49,6 +49,7 @@ jobs:
         
     - name: Configure
       run: |
+        set -e
         export LANG=C.UTF-8
         export TERM=dumb
         export VERBOSE=true
@@ -59,26 +60,20 @@ jobs:
         ./configure CFLAGS="-g -O2" ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }}
 
     - name: Build
-      id: build
       run: |
+        set -e
         cd guile
         make -j$(nproc) V=1 2>&1 | tee build.log
 
     - name: Check
-      id: check
       run: |
+        set -e
         cd guile
         make check V=1  2>&1 | tee check.log
 
     - name: Archive Test Logs
-      if: always() && steps.check.outcome != 'skipped'
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs  ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }}
         path: ./guile/*.log
         if-no-files-found: warn
-
-    - name: Late failure
-      if: steps.build.outcome != 'success' || steps.check.outcome != 'success'
-      run: exit 1
-        
