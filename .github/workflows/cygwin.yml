@@ -42,6 +42,7 @@ jobs:
     # This uses Cygwin's bash
     - name: Configure
       run: |
+        set -e
         export LANG=C.UTF-8
         export TERM=dumb
         export VERBOSE=true
@@ -56,6 +57,7 @@ jobs:
     - name: Build
       id: build
       run: |
+        set -e
         cd guile
         make -j4 V=1 2>&1 | tee build.log
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
@@ -64,18 +66,14 @@ jobs:
     - name: Check
       id: check
       run: |
+        set -e
         cd guile
         make check 2>&1 | tee check.log
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
     - name: Archive Test Logs
-      if: always() && steps.check.outcome != 'skipped'
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs
         path: ./guile/*.log
         if-no-files-found: warn
-
-    - name: Late failure
-      if: steps.build.outcome != 'success' || steps.check.outcome != 'success'
-      run: exit 1
