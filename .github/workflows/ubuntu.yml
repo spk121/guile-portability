@@ -73,5 +73,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs  ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }}
-        path: ./guile/*.log ./guile/test-suite/tests/*.log
+        path: |
+          guile/*.log
+          guile/test-suite/tests/*.log
         if-no-files-found: warn
