@@ -36,7 +36,7 @@ jobs:
 
     - name: Git clone subprojects
       run: |
-        & "C:\Program Files\Git\bin\git.exe" clone --branch staging --single-branch https://github.com/spk121/guile
+        git clone --branch staging --single-branch https://github.com/spk121/guile
       shell: pwsh
 
     # This uses Cygwin's bash
@@ -46,27 +46,28 @@ jobs:
         export TERM=dumb
         export VERBOSE=true
         export TZ=America/Los_Angeles
-        export TOP="$(pwd)"
-        set -e  # Exit on any error
-        mkdir -p "$(pwd)/app" && \
-        cd guile && \
-        ./autogen.sh && \
-          ./configure CFLAGS="-g -O2 -Wall" --disable-lto --prefix="$(pwd)/app"
+        cd guile
+        git config --global --add safe.directory . # keeps Window's git from fighting Cygwin's git
+        ./autogen.sh
+        ./configure CFLAGS="-g -O2 -Wall" --disable-lto
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
     # This uses Cygwin's bash
     - name: Build
+      id: build
       run: |
-        cd guile && \
+        cd guile
         make -j4 V=1 2>&1 | tee build.log
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
     # This uses Cygwin's bash
     - name: Check
+      id: check
       run: |
         cd guile
         make check 2>&1 | tee check.log
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
+
     - name: Archive Test Logs
       if: always() && steps.check.outcome != 'skipped'
       uses: actions/upload-artifact@v4
@@ -74,3 +75,7 @@ jobs:
         name: Test Logs
         path: ./guile/*.log
         if-no-files-found: warn
+
+    - name: Late failure
+      if: steps.build.outcome != 'success' || steps.check.outcome != 'success'
+      run: exit 1
