@@ -45,7 +45,7 @@ jobs:
 
     - name: Git clone subprojects
       run: |
-        git clone --branch staging --single-branch https://github.com/spk121/guile
+        git clone --branch staging https://github.com/spk121/guile.git
         
     - name: Configure
       run: |
