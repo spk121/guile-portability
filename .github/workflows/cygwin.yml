@@ -56,7 +56,6 @@ jobs:
     # This uses Cygwin's bash
     - name: Build
       run: |
-        set -e
         cd guile
         make -j4 V=1 2>&1 | tee build.log
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
@@ -64,9 +63,8 @@ jobs:
     # This uses Cygwin's bash
     - name: Check
       run: |
-        set -e
         cd guile
-        make check 2>&1 | tee check.log
+        make check -k 2>&1 | tee check.log
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
     - name: Archive Test Logs
