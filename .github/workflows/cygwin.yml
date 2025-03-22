@@ -34,10 +34,10 @@ jobs:
           libiconv-devel
           texinfo texinfo-tex texlive
 
-    - name: Git clone subprojects
+    - name: Git clone Guile
       run: |
-        git clone --branch staging --single-branch https://github.com/spk121/guile
-      shell: pwsh
+        git clone --branch staging https://github.com/spk121/guile.git
+      shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
     # This uses Cygwin's bash
     - name: Configure
