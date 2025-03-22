@@ -66,7 +66,7 @@ jobs:
     - name: Check
       run: |
         cd guile
-        make check V=1
+        make check -k V=1
 
     - name: Archive Test Logs
       if: always()
