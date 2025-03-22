@@ -19,10 +19,23 @@ jobs:
       with:
         msystem: MSYS
         install: >-
-          autotools gcc flex gperf lzip xz
-          pkgconf gettext-devel gmp-devel libffi-devel
-          libgc-devel libiconv-devel libintl libreadline-devel
-          libunistring-devel texinfo
+          autotools
+          flex
+          gcc
+          gettext-devel
+          git
+          gmp-devel
+          gperf
+          libffi-devel
+          libgc-devel
+          libiconv-devel
+          libintl
+          libreadline-devel
+          libunistring-devel
+          lzip
+          pkgconf 
+          texinfo
+          xz
 
     - name: Git clone Guile
       run: |
