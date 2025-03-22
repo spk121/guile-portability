@@ -49,26 +49,23 @@ jobs:
         
     - name: Configure
       run: |
-        set -e
         export LANG=C.UTF-8
         export TERM=dumb
         export VERBOSE=true
         export DEBIAN_FRONTEND=noninteractive
         export TZ=America/Los_Angeles
-        cd guile && \
-        ./autogen.sh && \
+        cd guile
+        ./autogen.sh
         ./configure CFLAGS="-g -O2" ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }}
 
     - name: Build
       run: |
-        set -e
-        cd guile && \
+        cd guile
         make -j$(nproc) V=1
 
     - name: Check
       run: |
-        set -e
-        cd guile && \
+        cd guile
         make check V=1
 
     - name: Archive Test Logs
@@ -76,5 +73,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Test Logs  ${{ matrix.thread }} ${{ matrix.jit }} ${{ matrix.gmp }}
-        path: ./guile/*.log
+        path: ./guile/*.log ./guile/test-suite/tests/*.log
         if-no-files-found: warn
