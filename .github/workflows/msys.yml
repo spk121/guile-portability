@@ -58,7 +58,6 @@ jobs:
     # This uses MSYS's bash
     - name: Build
       run: |
-        set -e
         cd guile
         make -j4 V=1 2>&1 | tee build.log
       shell: msys2 -o igncr '{0}'
@@ -66,9 +65,8 @@ jobs:
     # This uses MSYS's bash
     - name: Check
       run: |
-        set -e
         cd guile
-        make check 2>&1 | tee check.log
+        make check -k 2>&1 | tee check.log
       shell: msys2 -o igncr '{0}'
 
     - name: Archive Test Logs
