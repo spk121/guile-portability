@@ -1,12 +1,6 @@
 name: Build and Push Guile Docker Image
 
 on:
-  # Trigger on push to main branch and pull requests
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  # Allow manual triggering
   workflow_dispatch:
 
 jobs:
