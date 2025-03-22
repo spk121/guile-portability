@@ -36,7 +36,7 @@ jobs:
 
     - name: Git clone Guile
       run: |
-        git clone --branch staging https://github.com/spk121/guile.git
+        git clone --branch staging --depth 1 https://github.com/spk121/guile.git
       shell: C:\cygwin\bin\bash.exe -o igncr '{0}'
 
     # This uses Cygwin's bash
